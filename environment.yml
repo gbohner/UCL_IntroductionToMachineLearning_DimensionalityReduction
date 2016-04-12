@@ -1,21 +1,8 @@
 name: root
 dependencies:
 - _license=1.1=py27_1
-- abstract-rendering=0.5.1=np110py27_0
-- alabaster=0.7.6=py27_0
 - anaconda=2.4.1=np110py27_0
 - anaconda-client=1.2.1=py27_0
-- appscript=1.0.1=py27_0
-- argcomplete=1.0.0=py27_1
-- astropy=1.0.6=np110py27_0
-- babel=2.1.1=py27_0
-- backports_abc=0.4=py27_0
-- beautifulsoup4=4.4.1=py27_0
-- bitarray=0.8.1=py27_0
-- blaze-core=0.8.3=py27_0
-- bokeh=0.10.0=py27_0
-- boto=2.38.0=py27_0
-- bottleneck=1.0.0=np110py27_0
 - cdecimal=2.3=py27_0
 - cffi=1.2.1=py27_0
 - clyent=1.2.0=py27_0
@@ -24,13 +11,11 @@ dependencies:
 - conda-build=1.18.2=py27_0
 - conda-env=2.4.5=py27_0
 - configobj=5.0.6=py27_0
-- cryptography=1.0.2=py27_0
 - curl=7.45.0=0
 - cycler=0.9.0=py27_0
 - cython=0.23.4=py27_1
 - cytoolz=0.7.4=py27_0
 - datashape=0.4.7=np110py27_1
-- decorator=4.0.4=py27_0
 - docutils=0.12=py27_0
 - dynd-python=0.7.0=py27_0
 - enum34=1.0.4=py27_0
