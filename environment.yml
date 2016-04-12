@@ -19,7 +19,6 @@ dependencies:
 - ipython-qtconsole=4.0.1=py27_0
 - ipython_genutils=0.1.0=py27_0
 - ipywidgets=4.1.0=py27_0
-- jpeg=8d=1
 - jsonschema=2.4.0=py27_0
 - jupyter=1.0.0=py27_1
 - jupyter_client=4.1.1=py27_0
