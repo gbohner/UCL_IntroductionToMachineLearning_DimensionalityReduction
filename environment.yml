@@ -5,7 +5,6 @@ dependencies:
 - alabaster=0.7.6=py27_0
 - anaconda=2.4.1=np110py27_0
 - anaconda-client=1.2.1=py27_0
-- appnope=0.1.0=py27_0
 - appscript=1.0.1=py27_0
 - argcomplete=1.0.0=py27_1
 - astropy=1.0.6=np110py27_0
