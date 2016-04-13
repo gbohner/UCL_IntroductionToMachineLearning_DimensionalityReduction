@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
+import scipy
 
 
 def custom_lle(X, n_neighbours=12, k=2, regularization=1e-3):
@@ -29,29 +30,32 @@ def custom_lle(X, n_neighbours=12, k=2, regularization=1e-3):
 
     #Step 2 - For each point solve reconstruction using it's neighbourhood as regressors
     # Input - data,  neighbourhoods. 
-    # Output - local reconstruction weights W (samples x samples, very sparse, each raw contains weights from the local neighbourhood)
+    # Output - local reconstruction weights W (n_neighbours x samples)
     
-    W = np.zeros((N, N))
+    # Less intuitive but numerically more stable solution:
+    # W = np.zeros((n_neighbours, N))
+    # for i in range(N):
+    #     A = X[:,Xneigh[:,i]] - X[:,i][:,np.newaxis]
+    #     C = A.T.dot(A)
+    #     C = C + regularization * np.eye(n_neighbours) * np.trace(C)
+    #     W[:,i] = np.linalg.solve(C, np.ones(n_neighbours))
+    #     W[:,i] = W[:,i]/np.sum(W[:,i])
+    # This W is the very same as in the Matlab version
+                                    
+    # Equivalent solution with more intuition and less numerical stability
+    W = np.zeros((n_neighbours, N))                          
     for i in range(N):
-        A = X[:,Xneigh[:,i]] - X[:,i][:,np.newaxis]
-        C = A.T.dot(A)
-        C = C + regularization * np.eye(n_neighbours) * np.trace(C)
-        W[i,Xneigh[:,i]] = np.linalg.solve(C, np.ones(n_neighbours))
-        W[i,Xneigh[:,i]] = W[i,Xneigh[:,i]]/np.sum(W[i,Xneigh[:,i]])
-                                    
-                                    
-#     W = np.zeros((N, N))                          
-#     for i in range(N):
-#     	# For each neighborhood, solve the local regularized linear regression with constraint that sum(w)=1
-#     	A = X[:,Xneigh[:,i]] # Get the regressors, solve min_w ||A w - X[:,i]||^2 + regularization*||w||^2, with w as the cofficients (sum(w)=1 constraint)
-#     	# General regularized regression solution (you might wanna learn this well... )        
-#     	W[i,Xneigh[:,i]] = np.linalg.inv(A.T.dot(A) + regularization*np.eye(n_neighbours)).dot(A.T).dot(X[:,i])
-#     	W[i,Xneigh[:,i]] = W[i,Xneigh[:,i]]/np.sum(W[i,Xneigh[:,i]])
-# 		# This is the solution for the unconstrained problem.
-# 		# However our constraint is that W[:,i] lies on the unit ball. This is easy to fulfil, as we 
-# 		# have to find the closest point on the unit ball to the unconstrained solution, which is simply normalizing the vector
+    	# For each neighborhood, solve the local regularized linear regression with constraint that sum(w)=1
+    	A = X[:,Xneigh[:,i]] # Get the regressors, solve min_w ||A w - X[:,i]||^2 + regularization*||w||^2, with w as the cofficients (sum(w)=1 constraint)
+    	# General regularized regression solution (you might wanna learn this well... )        
+    	W[:,i] = np.linalg.inv(A.T.dot(A) + regularization*np.eye(n_neighbours)).dot(A.T).dot(X[:,i])
+        # This is the solution for the unconstrained problem.
+        # However our constraint is that W[:,i] lies on the unit ball. This is easy to fulfil, as we 
+        # have to find the closest point on the unit ball to the unconstrained solution, which is simply normalizing the vector
+    	W[:,i] = W[:,i]/np.sum(W[:,i])
 
-
+        # Slight numerical differences between the two solutions, mainly due to linalg.inv being terrible without regularization 
+        # (should use "solve" in general, but formula is more understandable this way)
 
 
     #Step 3 - Compute the best k-dimensional embedding Y by solving the quadratic cost function
@@ -67,29 +71,30 @@ def custom_lle(X, n_neighbours=12, k=2, regularization=1e-3):
 	# subject to some constraints (see lecture notes)
     # Meaning we retain as much of the local "reconstructability" by the neighbours as possible
 
-    # Writing down a "design matrix" Phi, such that Phi = ( I - W).T.dot(I - W), the cost function simplifies
+    # Writing down a "design matrix" M, such that Phi = ( I - W).T.dot(I - W), the cost function simplifies
     # Cost(Y) = sum(sum( Phi * (Y.T.dot(Y)) )) , where * is elementwise product
 
     # This is analytically solveable by setting Y to the bottom 2 ... k+1 eigenvectors of Phi
     
     #Phi = (np.eye(N) - W).T.dot(np.eye(N) - W)
     #d,Y = np.linalg.eig(Phi)
+
+    Phi = np.eye(N)
     
-    M = np.eye(N)
-    
+    # Filling up Phi as Phi = I - W - W^T + WxW, where W now is the full sparse weight matrix (with elements non-zero where there is a neighbourhood)
     for i in range(N):
         ne = Xneigh[:,i]
-        w = W[i,ne]
-        M[i,ne] = M[i,ne] - w.T
-        M[ne,i] = M[ne,i] - w
-        M[ne,ne] = M[ne,ne] + w.dot(w.T)
+        w = W[:,i]
+        Phi[i,ne] = Phi[i,ne] - w.T
+        Phi[ne,i] = Phi[ne,i] - w
+        Phi[np.ix_(ne,ne)] = Phi[np.ix_(ne,ne)] + np.outer(w,w)
     
-    d,Y = np.linalg.eig(M)
-    order = np.argsort(d)[::-1] # descending sort
-    Y = Y[:,order][:,0:k]
+    d,Y = np.linalg.eigh(Phi)
+    order = np.argsort(d) # ascending sort (lowest eigenvalues first)
+    Y = Y[:,order][:,k:0:-1] # Python indexing is a bit weird, this actually is the k+1-th, k-th, ... , 2nd eigenvector belonging to the respective smallest eigenvalues
 
     
-    return Y
+    return Y #W, Phi, Xneigh # - if you wanna look at other quantities
 
 
 # Further solutions
@@ -103,6 +108,7 @@ def custom_lle(X, n_neighbours=12, k=2, regularization=1e-3):
 # Dctr,Vctr = np.linalg.eig(np.dot(Xctr,Xctr.T)/N) # Get eigenvalues and eigenvectors (unsorted)
 
 
+# Helper function to visualize image arrays
 def showfreyface(X, ndims=0, scale=1, figtitle=0):	
 	sz = X.shape
 	if ndims == 0:
