@@ -107,7 +107,6 @@ def custom_lle(X, n_neighbours=12, k=2, regularization=1e-3):
 # Xctr = X - X.mean(axis=1)[:,np.newaxis]
 # Dctr,Vctr = np.linalg.eig(np.dot(Xctr,Xctr.T)/N) # Get eigenvalues and eigenvectors (unsorted)
 
-
 # Helper function to visualize image arrays
 def showfreyface(X, ndims=0, scale=1, figtitle=0):	
 	sz = X.shape
